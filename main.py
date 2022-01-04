@@ -29,11 +29,11 @@ async def on_ready():
     print('Logged in as',bot.user.name)
     print('------')
 
-@bot.command() # Не передаём аргумент pass_context, так как он был нужен в старых версиях.
-async def hello(ctx): # Создаём функцию и передаём аргумент ctx.
-    author = ctx.message.author # Объявляем переменную author и записываем туда информацию об авторе.
+@bot.command() 
+async def hello(ctx): 
+    author = ctx.message.author 
 
-    await ctx.send(f'Hello, {author.mention}!') # Выводим сообщение с упоминанием автора, обращаясь к переменной author.
+    await ctx.send(f'Hello, {author.mention}!') 
     await ctx.message.delete()
 
 @bot.command()
@@ -204,4 +204,4 @@ async def recent(ctx,user_arg,beatmap_arg):
     embed.description = example
     await ctx.send(embed=embed)
 
-bot.run(settings['token']) # Обращаемся к словарю settings с ключом token, для получения токена
+bot.run(settings['token']) 
