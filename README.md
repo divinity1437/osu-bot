@@ -2,8 +2,8 @@
 # NOTE: Code inside file are so disgusting, so my tip to you, dont use it. <a href="https://images5.alphacoders.com/991/thumb-1920-991402.png" title="osu! pic"> <img src ="https://images5.alphacoders.com/991/thumb-1920-991402.png"  alt="DMCA.com Protection Status" /></a>
 <a href=https://github.com/divinity1437>Me</a> and with the help of some my friend are working to fix this poor code and create new command! It might take a while. Not now but surely!
 # Commands:
-* [Osu! profile](https://github.com/divinity1437/osu-bot#osu!_profile)
-* [osu! map stats](https://github.com/divinity1437/osu-bot#osu!_map_stats)
+* [Osu! profile](https://github.com/divinity1437/osu-bot#osu-profile)
+* [osu! map stats](https://github.com/divinity1437/osu-bot#osu-map-stats)
 _____
 # osu! profile
 ![image](https://user-images.githubusercontent.com/52098168/148081215-3efb05f0-b164-4e9e-afd2-0ebe7a8eddf0.png)
