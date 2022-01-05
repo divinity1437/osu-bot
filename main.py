@@ -12,16 +12,12 @@ import asyncio
 from discord.ext.commands import Bot
 from time import strftime
 from time import gmtime
+from PIL import Image, ImageFont, ImageDraw
+from mods import *
 
-osu_api_key = "ur api here"
 avatar_guest = "https://osu.ppy.sh/images/layout/avatar-guest.png"
-silver_ss = "https://cdn.discordapp.com/emojis/462313722556186626.webp?size=44&quality=lossless"
-gold_ss = "https://cdn.discordapp.com/emojis/462313722736672780.webp?size=44&quality=lossless"
-silver_s = "https://cdn.discordapp.com/emojis/462313722732347401.webp?size=44&quality=lossless"
-gold_s = "https://cdn.discordapp.com/emojis/462313719762911233.webp?size=44&quality=lossless"
-a_rank = "https://cdn.discordapp.com/emojis/462313719083565066.webp?size=44&quality=lossless"
 
-bot = commands.Bot(command_prefix = settings['prefix']) 
+bot = commands.Bot(command_prefix = settings['prefix'])
 
 @bot.event
 async def on_ready():
@@ -29,11 +25,11 @@ async def on_ready():
     print('Logged in as',bot.user.name)
     print('------')
 
-@bot.command() 
-async def hello(ctx): 
-    author = ctx.message.author 
+@bot.command() # Не передаём аргумент pass_context, так как он был нужен в старых версиях.
+async def hello(ctx): # Создаём функцию и передаём аргумент ctx.
+    author = ctx.message.author # Объявляем переменную author и записываем туда информацию об авторе.
 
-    await ctx.send(f'Hello, {author.mention}!') 
+    await ctx.send(f'Hello, {author.mention}!') # Выводим сообщение с упоминанием автора, обращаясь к переменной author.
     await ctx.message.delete()
 
 @bot.command()
@@ -161,7 +157,7 @@ async def map(ctx,beatmap_arg):
     await ctx.send(embed=embed)
 
 @bot.command()
-async def recent(ctx,user_arg,beatmap_arg):
+async def recent(ctx,user_arg,beatmap_arg): # WIP
     response = requests.get(f"https://osu.ppy.sh/api/get_user_recent?k={osu_api_key}&u={user_arg}")
     response = requests.get(f"https://osu.ppy.sh/api/get_beatmaps?k={osu_api_key}&s={beatmap_arg}")
     resp = json.loads(response.text)
@@ -169,7 +165,7 @@ async def recent(ctx,user_arg,beatmap_arg):
     try:
         give_me_json = resp[0]
     except IndexError:
-        return await ctx.send("Can't find recent play!")
+        return await ctx.send("Can't find recent play!") 
 
     osu_username = give_me_json["username"]
     osu_user_id = give_me_json["user_id"]
@@ -204,4 +200,75 @@ async def recent(ctx,user_arg,beatmap_arg):
     embed.description = example
     await ctx.send(embed=embed)
 
-bot.run(settings['token']) 
+@bot.command()
+async def top(ctx,user_arg):
+    response = requests.get(f"https://osu.ppy.sh/api/get_user_best?k={osu_api_key}&u={user_arg}&limit=1")
+    resp = json.loads(response.text)
+
+    try:
+        give_me_json = resp[0]
+    except IndexError:
+        return await ctx.send("Can't find user top play!")
+
+    osu_user_id = give_me_json["user_id"]
+    avatar_request = requests.get(f"https://a.ppy.sh/{osu_user_id}")
+    avatar_response = avatar_request.text
+    beatmap_id = give_me_json["beatmap_id"]
+    score = give_me_json["score"]
+    maxcombo = give_me_json["maxcombo"]
+    beatmap_bg = f"https://b.ppy.sh/thumb/{beatmap_id}.jpg"
+    count50 = give_me_json["count50"]
+    count100 = give_me_json["count100"]
+    count300 = give_me_json["count300"]
+    countmiss = give_me_json["countmiss"]
+    enabled_mods = give_me_json["enabled_mods"]
+    rank = give_me_json["rank"]
+    pp_play = give_me_json["pp"]
+
+    hash_object = hashlib.md5(avatar_response.encode())
+    avatar_md5_hash = hash_object.hexdigest()
+
+    if avatar_md5_hash == "9226b343e6fe53b64aa8b06b3f4c2f19":
+        osu_avatar = avatar_guest
+    else:
+        osu_avatar = f"https://a.ppy.sh/{osu_user_id}"
+
+    if enabled_mods == "0":
+        mods = f"NM"
+    if enabled_mods == "8":
+        mods = f"HD"
+    if enabled_mods == "16":
+        mods = f"HR"
+    if enabled_mods == "64":
+        mods = f"DT"
+    if enabled_mods == "72":
+        mods = f"HDDT"
+    if enabled_mods == "24":
+        mods = f"HDHR"
+    if enabled_mods == "2":
+        mods = f"EZ"
+    if enabled_mods == "1024":
+        mods = f"FL"
+    if enabled_mods == "10":
+        mods = f"EZHD"
+    if enabled_mods == "74":
+        mods = f"EZHDDT"
+
+    print(mods)
+
+    osu = """
+    Weird way to dispay this :o"""
+
+    title = f'osu! TopPlay Score for {osu_user_id}'    
+    embed = discord.Embed(color = discord.Colour.random(),description=f"Why did i do that...")
+    embed.set_author(name=title, url=f"https://osu.ppy.sh/u/{osu_user_id}", icon_url = osu_avatar)
+    embed.set_thumbnail(url=beatmap_bg)
+    embed.add_field(name="▸PP", value=(round(int(float(pp_play)))), inline=True)
+    embed.add_field(name="▸300", value=(round(int(float(count300)))), inline=True)
+    embed.add_field(name="▸100", value=(int(float((count100)))), inline=True)
+    embed.add_field(name="▸50", value=(round(int(float(count50)))), inline=True)
+    embed.add_field(name="▸MODS", value=mods, inline=True)
+    embed.description = osu
+    await ctx.send(embed = embed)
+
+bot.run(settings['token']) # Обращаемся к словарю settings с ключом token, для получения токена
