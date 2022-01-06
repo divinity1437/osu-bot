@@ -153,6 +153,52 @@ async def kurikku(ctx,user_arg): # only work with id
     await ctx.send(embed = embed)
 
 @bot.command()
+async def maplistk(ctx,beatmap_arg): # number 1 from beatmap, only work with beatmap id
+    json_data = requests.get(f"https://kurikku.pw/api/v1/scores?b={beatmap_arg}&l=1").json()
+
+    try:
+      json_data
+    except IndexError:
+      return await ctx.send("Uh oh user not found!")
+
+    try: 
+        code = json_data["code"]
+        print(code)
+        scores = json_data["scores"][0]
+        score = json_data["scores"][0]["score"]
+        max_combo = json_data["scores"][0]["max_combo"]
+        count_300 = json_data["scores"][0]["count_300"]
+        count_100 = json_data["scores"][0]["count_100"]
+        count_50 = json_data["scores"][0]["count_50"]
+        count_miss = json_data["scores"][0]["count_miss"]
+        accuracy = json_data["scores"][0]["accuracy"]
+        pp = json_data["scores"][0]["pp"]
+        rank = json_data["scores"][0]["rank"]
+        username = json_data["scores"][0]["user"]["username"]
+        time = json_data["scores"][0]["time"]
+    except:
+        return await ctx.send("Sorry, error uwu")
+
+    example = """
+    """
+
+    embed = discord.Embed(color = discord.Colour.random(),description=code)
+    embed.set_author(name=username,url=f"https://kurikku.pw/u/{username}")
+    embed.add_field(name="▸Username", value=username, inline=True)
+    embed.add_field(name="▸Score", value=score, inline=True)
+    embed.add_field(name="▸PP", value=pp, inline=True)
+    embed.add_field(name="▸Rank", value=rank, inline=True)
+    embed.add_field(name="▸Max combo", value=max_combo, inline=True)
+    embed.add_field(name="▸300", value=count_300, inline=True)
+    embed.add_field(name="▸100", value=count_100, inline=True)
+    embed.add_field(name="▸50", value=count_50, inline=True)
+    embed.add_field(name="▸Miss", value=count_miss, inline=True)
+    embed.add_field(name="▸Date", value=time, inline=True)
+    embed.set_thumbnail(url="https://a.kurikku.pw/999") # WIP pfp, idk how get userid from this shit
+    embed.description = "Idk wtf is that"
+    await ctx.send(embed=embed)
+
+@bot.command()
 async def map(ctx,beatmap_arg):
     response = requests.get(f"https://osu.ppy.sh/api/get_beatmaps?k={osu_api_key}&s={beatmap_arg}")
     resp = json.loads(response.text)
