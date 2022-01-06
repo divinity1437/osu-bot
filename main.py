@@ -18,7 +18,7 @@ from mods import *
 avatar_guest = "https://osu.ppy.sh/images/layout/avatar-guest.png"
 
 bot = commands.Bot(command_prefix = settings['prefix'])
-
+osu_api_key = settings['osu_api_key']
 @bot.event
 async def on_ready():
     print('------')
@@ -102,10 +102,53 @@ async def osu(ctx,user_arg):
     embed = discord.Embed(color = discord.Colour.random(),description=pp_raw)
     embed.set_author(name=title, icon_url = osu_user_country)
     embed.set_thumbnail(url=osu_avatar)
-    embed.add_field(name="▸PP", value=(round(int(float(pp_raw)))), inline=True)
-    embed.add_field(name="▸Level", value=(round(int(float(level)))), inline=True)
-    embed.add_field(name="▸Accuracy", value=(int(float((accuracy)))), inline=True)
-    embed.add_field(name="▸Playcount", value=(round(int(float(playcount)))), inline=True)
+    embed.add_field(name="▸PP", value=(round(float(pp_raw))), inline=True)
+    embed.add_field(name="▸Level", value=(round(float(level))), inline=True)
+    embed.add_field(name="▸Accuracy", value=(round(float((accuracy)))), inline=True)
+    embed.add_field(name="▸Playcount", value=(int(float(playcount))), inline=True)
+    embed.description = osu
+    await ctx.send(embed = embed)
+
+@bot.command()
+async def kurikku(ctx,user_arg): # only work with id 
+    
+    json_data = requests.get(f"https://kurikku.pw/api/v1/users/full?id={user_arg}").json()
+
+    try:
+      json_data
+    except IndexError:
+      return await ctx.send("Uh oh user not found!")
+  
+    osu_username = json_data["username"]
+    osu_user_id = json_data["id"]
+    osu_country_acronym = json_data["country"]
+    osu_user_country = f"https://osu.ppy.sh/images/flags/{osu_country_acronym}.png"
+    playcount = json_data["std"]["playcount"]
+    pp = json_data["std"]["pp"]
+    level = json_data["std"]["level"]
+    accuracy = json_data["std"]["accuracy"]
+
+    avatar_request = requests.get(f"https://a.kurikku.pw/{osu_user_id}")
+    avatar_response = avatar_request.text
+
+    hash_object = hashlib.md5(avatar_response.encode())
+    avatar_md5_hash = hash_object.hexdigest()
+
+    if avatar_md5_hash == "9226b343e6fe53b64aa8b06b3f4c2f19":
+        osu_avatar = avatar_guest
+    else:
+        osu_avatar = f"https://a.kurikku.pw/{osu_user_id}" 
+
+    osu = """"""
+
+    title = f'osu! Standard Profile for {osu_username}'    
+    embed = discord.Embed(color = discord.Colour.random(),description=osu_username)
+    embed.set_author(name=title, icon_url = osu_user_country)
+    embed.set_thumbnail(url=osu_avatar)
+    embed.add_field(name="▸PP", value=(round(float(pp))), inline=True)
+    embed.add_field(name="▸Level", value=(round(float(level))), inline=True)
+    embed.add_field(name="▸Accuracy", value=(round(float((accuracy)))), inline=True)
+    embed.add_field(name="▸Playcount", value=(int(float(playcount))), inline=True)
     embed.description = osu
     await ctx.send(embed = embed)
 
