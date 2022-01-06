@@ -141,7 +141,7 @@ async def kurikku(ctx,user_arg): # only work with id
 
     osu = """"""
 
-    title = f'osu! Standard Profile for {osu_username}'    
+    title = f'osu! Kurikku Profile for {osu_username}'    
     embed = discord.Embed(color = discord.Colour.random(),description=osu_username)
     embed.set_author(name=title, icon_url = osu_user_country)
     embed.set_thumbnail(url=osu_avatar)
