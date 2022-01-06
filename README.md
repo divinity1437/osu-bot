@@ -11,7 +11,7 @@ _____
 # osu! map stats
 ![image](https://user-images.githubusercontent.com/52098168/148081305-42a8f14b-64f4-4493-8d63-43339dad9358.png)
 _____
-#TODO list
+# TODO list    
 ✅ Do user stats    
 ✅ Do map stats    
 ❎ Do better style for user and map stats    
