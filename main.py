@@ -1,28 +1,21 @@
-import discord
 from discord.ext import commands
 from config import settings
-import json
-import requests
-import random
-import hashlib
-import time
-import decimal
-import math
-import asyncio
-from discord.ext.commands import Bot
 from time import strftime
 from time import gmtime
-from PIL import Image, ImageFont, ImageDraw
-from mods import *
+import requests
+import discord
+import hashlib
+import mods
 
 avatar_guest = "https://osu.ppy.sh/images/layout/avatar-guest.png"
 
 bot = commands.Bot(command_prefix = settings['prefix'])
 osu_api_key = settings['osu_api_key']
+
 @bot.event
 async def on_ready():
     print('------')
-    print('Logged in as',bot.user.name)
+    print(f'Logged in as {bot.user.name}')
     print('------')
 
 @bot.command() # Не передаём аргумент pass_context, так как он был нужен в старых версиях.
@@ -37,15 +30,14 @@ async def help_me(ctx):
     author = ctx.message.author
 
     await ctx.send(f'Hi, {author.mention}!')
-    title = f'Here your help embed'
     helpa = """
-    Wink - send you some Wink gif/png 
-Help_Me - send you embed with commands (You look at it rn) 
-Osu - send you osu! stats from bancho 
-Map - send you osu! map stats from bancho
+    Wink - Returns a wink PNG / GIF  
+    Help_Me - Sends this message 
+    Osu - shows your osu!bancho stats 
+    Map - shows osu!bancho map stats
     """
-    embed = discord.Embed(color = discord.Colour.random())
-    embed.set_author(name=helpa, icon_url = "https://a.ppy.sh/10081838")
+    embed = discord.Embed(color=discord.Colour.random())
+    embed.set_author(name=helpa, icon_url="https://a.ppy.sh/10081838")
 
     embed.set_thumbnail(url="https://a.ppy.sh/10081838")
     await ctx.send(embed=embed)
@@ -54,18 +46,18 @@ Map - send you osu! map stats from bancho
 @bot.command()
 async def wink(ctx):
 	response = requests.get('https://some-random-api.ml/animu/wink')
-	json_data = json.loads(response.text)
+	json_data = response.json()
 
-	embed = discord.Embed(color = discord.Colour.random(), title = 'Some wink')
-	embed.set_image(url = json_data['link'])
-	await ctx.send(embed = embed)
+	embed = discord.Embed(color=discord.Colour.random(), title = 'Some wink')
+	embed.set_image(url=json_data['link'])
+	await ctx.send(embed=embed)
 	await ctx.message.delete()
 
 @bot.command()
-async def osu(ctx,user_arg):    
+async def osu(ctx, user_arg):    
     
     response = requests.get(f"https://osu.ppy.sh/api/get_user?k={osu_api_key}&u={user_arg}")
-    resp = json.loads(response.text)
+    resp = response.json()
 
     try:
       give_me_json = resp[0]
@@ -110,8 +102,7 @@ async def osu(ctx,user_arg):
     await ctx.send(embed = embed)
 
 @bot.command()
-async def kurikku(ctx,user_arg): # only work with id 
-    
+async def kurikku(ctx, user_arg): # only work with id 
     json_data = requests.get(f"https://kurikku.pw/api/v1/users/full?id={user_arg}").json()
 
     try:
@@ -142,7 +133,7 @@ async def kurikku(ctx,user_arg): # only work with id
     osu = """"""
 
     title = f'osu! Kurikku Profile for {osu_username}'    
-    embed = discord.Embed(color = discord.Colour.random(),description=osu_username)
+    embed = discord.Embed(color=discord.Colour.random(), description=osu_username)
     embed.set_author(name=title, icon_url = osu_user_country)
     embed.set_thumbnail(url=osu_avatar)
     embed.add_field(name="▸PP", value=(round(float(pp))), inline=True)
@@ -153,9 +144,8 @@ async def kurikku(ctx,user_arg): # only work with id
     await ctx.send(embed = embed)
 
 @bot.command()
-async def maplistk(ctx,beatmap_arg): # number 1 from beatmap, only work with beatmap id
+async def maplistk(ctx, beatmap_arg): # number 1 from beatmap, only work with beatmap id
     json_data = requests.get(f"https://kurikku.pw/api/v1/scores?b={beatmap_arg}&l=1").json()
-
     try:
       json_data
     except IndexError:
@@ -181,9 +171,10 @@ async def maplistk(ctx,beatmap_arg): # number 1 from beatmap, only work with bea
 
     example = """
     """
+    userid = requests.get(f"https://kurikku.pw/api/v1/users/whatid?name={username}").json()
 
-    embed = discord.Embed(color = discord.Colour.random(),description=code)
-    embed.set_author(name=username,url=f"https://kurikku.pw/u/{username}")
+    embed = discord.Embed(color=discord.Colour.random(), description=code)
+    embed.set_author(name=username, url=f"https://kurikku.pw/u/{username}")
     embed.add_field(name="▸Username", value=username, inline=True)
     embed.add_field(name="▸Score", value=score, inline=True)
     embed.add_field(name="▸PP", value=pp, inline=True)
@@ -194,14 +185,14 @@ async def maplistk(ctx,beatmap_arg): # number 1 from beatmap, only work with bea
     embed.add_field(name="▸50", value=count_50, inline=True)
     embed.add_field(name="▸Miss", value=count_miss, inline=True)
     embed.add_field(name="▸Date", value=time, inline=True)
-    embed.set_thumbnail(url="https://a.kurikku.pw/999") # WIP pfp, idk how get userid from this shit
+    embed.set_thumbnail(url=f"https://a.kurikku.pw/{userid['id']}")
     embed.description = "Idk wtf is that"
     await ctx.send(embed=embed)
 
 @bot.command()
-async def map(ctx,beatmap_arg):
+async def map(ctx, beatmap_arg):
     response = requests.get(f"https://osu.ppy.sh/api/get_beatmaps?k={osu_api_key}&s={beatmap_arg}")
-    resp = json.loads(response.text)
+    resp = response.json()
 
     try:
         give_me_json = resp[0]
@@ -227,9 +218,9 @@ async def map(ctx,beatmap_arg):
     """
 
     if total_length >= 3600:
-        time = strftime("Lenght: **%H:%M:%S**", gmtime(total_length))
+        time = strftime("Length: **%H:%M:%S**", gmtime(total_length))
     else:
-        time = strftime("Lenght: **%M:%S**", gmtime(total_length))
+        time = strftime("Length: **%M:%S**", gmtime(total_length))
 
 
     embed = discord.Embed(color = discord.Colour.random(),description=time)
@@ -246,10 +237,10 @@ async def map(ctx,beatmap_arg):
     await ctx.send(embed=embed)
 
 @bot.command()
-async def recent(ctx,user_arg,beatmap_arg): # WIP
+async def recent(ctx, user_arg, beatmap_arg): # WIP
     response = requests.get(f"https://osu.ppy.sh/api/get_user_recent?k={osu_api_key}&u={user_arg}")
     response = requests.get(f"https://osu.ppy.sh/api/get_beatmaps?k={osu_api_key}&s={beatmap_arg}")
-    resp = json.loads(response.text)
+    resp = response.json()
 
     try:
         give_me_json = resp[0]
@@ -290,9 +281,9 @@ async def recent(ctx,user_arg,beatmap_arg): # WIP
     await ctx.send(embed=embed)
 
 @bot.command()
-async def top(ctx,user_arg):
+async def top(ctx, user_arg):
     response = requests.get(f"https://osu.ppy.sh/api/get_user_best?k={osu_api_key}&u={user_arg}&limit=1")
-    resp = json.loads(response.text)
+    resp = response.json()
 
     try:
         give_me_json = resp[0]
@@ -322,28 +313,33 @@ async def top(ctx,user_arg):
     else:
         osu_avatar = f"https://a.ppy.sh/{osu_user_id}"
 
-    if enabled_mods == "0":
-        mods = f"NM"
-    if enabled_mods == "8":
-        mods = f"HD"
-    if enabled_mods == "16":
-        mods = f"HR"
-    if enabled_mods == "64":
-        mods = f"DT"
-    if enabled_mods == "72":
-        mods = f"HDDT"
-    if enabled_mods == "24":
-        mods = f"HDHR"
-    if enabled_mods == "2":
-        mods = f"EZ"
-    if enabled_mods == "1024":
-        mods = f"FL"
-    if enabled_mods == "10":
-        mods = f"EZHD"
-    if enabled_mods == "74":
-        mods = f"EZHDDT"
+    score_mods = ""
+    if enabled_mods == 0:
+        score_mods += "NM"
+    if enabled_mods & mods.NOFAIL > 0:
+        score_mods += "NF"
+    if enabled_mods & mods.EASY > 0:
+        score_mods += "EZ"
+    if enabled_mods & mods.HIDDEN > 0:
+        score_mods += "HD"
+    if enabled_mods & mods.HARDROCK > 0:
+        score_mods += "HR"
+    if enabled_mods & mods.DOUBLETIME > 0:
+        score_mods += "DT"
+    if enabled_mods & mods.HALFTIME > 0:
+        score_mods += "HT"
+    if enabled_mods & mods.FLASHLIGHT > 0:
+        score_mods += "FL"
+    if enabled_mods & mods.SPUNOUT > 0:
+        score_mods += "SO"
+    if enabled_mods & mods.TOUCHSCREEN > 0:
+        score_mods += "TD"
+    if enabled_mods & mods.RELAX > 0:
+        score_mods += "RX"
+    if enabled_mods & mods.RELAX2 > 0:
+        score_mods += "AP"
 
-    print(mods)
+    print(score_mods)
 
     osu = """
     Weird way to dispay this :o"""
@@ -356,7 +352,7 @@ async def top(ctx,user_arg):
     embed.add_field(name="▸300", value=(round(int(float(count300)))), inline=True)
     embed.add_field(name="▸100", value=(int(float((count100)))), inline=True)
     embed.add_field(name="▸50", value=(round(int(float(count50)))), inline=True)
-    embed.add_field(name="▸MODS", value=mods, inline=True)
+    embed.add_field(name="▸MODS", value=score_mods, inline=True)
     embed.description = osu
     await ctx.send(embed = embed)
 
