@@ -2,7 +2,6 @@ from discord.ext import commands
 from config import settings
 from time import strftime
 from time import gmtime
-from mods import *
 import requests
 import discord
 import hashlib
