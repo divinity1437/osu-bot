@@ -1,1 +1,3 @@
 config.*
+backup.*
+__pycache__*

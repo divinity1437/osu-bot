@@ -1,4 +1,5 @@
 from discord.ext import commands
+from cmyui.mysql import AsyncSQLPool
 from config import settings
 from time import strftime
 from time import gmtime
@@ -6,14 +7,19 @@ import requests
 import discord
 import hashlib
 import mods
+import glob
 
 avatar_guest = "https://osu.ppy.sh/images/layout/avatar-guest.png"
 
 bot = commands.Bot(command_prefix = settings['prefix'])
 osu_api_key = settings['osu_api_key']
+glob.db = AsyncSQLPool()
 
 @bot.event
 async def on_ready():
+
+    await glob.db.connect(glob.config.sql)
+
     print('------')
     print(f'Logged in as {bot.user.name}')
     print('------')
@@ -35,13 +41,58 @@ async def wink(ctx):
 	await ctx.message.delete()
 
 @bot.command()
-async def osu(ctx, user_arg):
-    json_data = requests.get(f"https://osu.ppy.sh/api/get_user?k={osu_api_key}&u={user_arg}").json()
+async def osu(ctx, user_arg = None , osu_id_arg = None):
+
+
+    user_id = None
+
+    if user_arg is None:
+        db_user = await glob.db.fetch(
+            "SELECT osu_user_id FROM users WHERE discord_identity = %s",[ctx.author.id]
+        ) 
+
+        if db_user is None:
+           return await ctx.send("You did not set ur osu profile yet.")
+
+        user_id = db_user["osu_user_id"]
 
     try:
-      json_data
+
+        if not user_id:
+            user_id = user_arg
+        
+        if osu_id_arg:
+            user_id = osu_id_arg
+
+        json_data = requests.get(f"https://osu.ppy.sh/api/get_user?k={osu_api_key}&u={user_id}").json()
     except IndexError:
-      return await ctx.send("Uh oh user not found!")
+        return await ctx.send("Uh oh user not found!")
+
+    if user_arg is not None and "set" in user_arg:
+
+        #ctx.author.id
+
+        if osu_id_arg is None:
+            return await ctx.send("No username or id specified.")
+
+
+        db_user_exists = await glob.db.fetch("SELECT 1 FROM users WHERE discord_identity = %s",[ctx.author.id])
+
+        if not db_user_exists:
+            await glob.db.execute("INSERT INTO `users` (`discord_identity`, `osu_user_id`) VALUES (%s, %s)",[
+                ctx.author.id,json_data[0]["user_id"]
+                ]
+            )
+        else:
+            await glob.db.execute("UPDATE `users` SET `osu_user_id` = %s WHERE discord_identity = %s;",[
+                json_data[0]["user_id"],ctx.author.id
+                ]
+            )
+
+        username = json_data[0]["username"]
+
+        return await ctx.send("You have set your profile to -> ", username)
+
 
     osu_username =json_data[0]["username"]
     osu_user_id =json_data[0]["user_id"]
@@ -120,7 +171,7 @@ async def kmapleader(ctx, beatmap_arg): # number 1 from beatmap, only work with 
         count_50 = json_data["scores"][0]["count_50"]
         count_miss = json_data["scores"][0]["count_miss"]
         accuracy = json_data["scores"][0]["accuracy"]
-        mods = json_data["scores"][0]["mods"]
+        modss = int(json_data["scores"][0]["mods"])
         pp = json_data["scores"][0]["pp"]
         rank = json_data["scores"][0]["rank"]
         username = json_data["scores"][0]["user"]["username"]
@@ -131,29 +182,30 @@ async def kmapleader(ctx, beatmap_arg): # number 1 from beatmap, only work with 
     userid = requests.get(f"https://kurikku.pw/api/v1/users/whatid?name={username}").json()
 
     score_mods = ""
-    if mods == 0:
+
+    if modss == 0:
         score_mods += "NM"
-    if mods & mods.NOFAIL > 0:
+    if modss & mods.NOFAIL > 0:
         score_mods += "NF"
-    if mods & mods.EASY > 0:
+    if modss & mods.EASY > 0:
         score_mods += "EZ"
-    if mods & mods.HIDDEN > 0:
+    if modss & mods.HIDDEN > 0:
         score_mods += "HD"
-    if mods & mods.HARDROCK > 0:
+    if modss & mods.HARDROCK > 0:
         score_mods += "HR"
-    if mods & mods.DOUBLETIME > 0:
+    if modss & mods.DOUBLETIME > 0:
         score_mods += "DT"
-    if mods & mods.HALFTIME > 0:
+    if modss & mods.HALFTIME > 0:
         score_mods += "HT"
-    if mods & mods.FLASHLIGHT > 0:
+    if modss & mods.FLASHLIGHT > 0:
         score_mods += "FL"
-    if mods & mods.SPUNOUT > 0:
+    if modss & mods.SPUNOUT > 0:
         score_mods += "SO"
-    if mods & mods.TOUCHSCREEN > 0:
+    if modss & mods.TOUCHSCREEN > 0:
         score_mods += "TD"
-    if mods & mods.RELAX > 0:
+    if modss & mods.RELAX > 0:
         score_mods += "RX"
-    if mods & mods.RELAX2 > 0:
+    if modss & mods.RELAX2 > 0:
         score_mods += "AP"
 
     print(score_mods)
