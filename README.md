@@ -39,7 +39,7 @@ git clone https://github.com/divinity1437/osu-bot
 ### Step 2:
 Install deps using this command:
 ```
-python -m pip install -r requirements.txt
+python3.9 -m pip install -r requirements.txt
 ```
 ### Step 3:
 ```
